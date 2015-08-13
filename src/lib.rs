@@ -20,46 +20,77 @@
 extern crate hidapi_rust;
 
 pub use hidapi_rust::HidApi;
-use hidapi_rust::HidDevice;
-use std::ops::Deref;
-use OwnedOrBorrowed::{Owned, Borrowed};
+use hidapi_rust::{HidDevice, c_ushort};
 
-enum OwnedOrBorrowed<'a, T: 'a> {
-    Owned(T),
-    Borrowed(&'a T),
+const VENDOR_ID: c_ushort = 6000;
+const PRODUCT_ID: c_ushort = 65280;
+
+pub enum Area {
+    Left,
+    Middle,
+    Right,
 }
 
-impl <'a, T> Deref for OwnedOrBorrowed<'a, T> {
-    type Target = T;
-    fn deref(&self) -> &Self::Target {
+impl Area {
+    pub fn to_number(self) -> usize {
         match self {
-            &Owned(ref o) => o,
-            &Borrowed(b) => b,
+            Area::Left => 0,
+            Area::Middle => 1,
+            Area::Right => 2,
         }
     }
 }
 
-#[derive(Default)]
-pub struct Color(u8, u8, u8);
+#[derive(Default, Copy, Clone)]
+pub struct Color {
+    r: u8,
+    g: u8,
+    b: u8,
+}
+
+impl Color {
+    pub fn new(r: u8, g: u8, b: u8) -> Color {
+        Color {
+            r: r,
+            g: g,
+            b: b,
+        }
+    }
+}
 
 pub struct KeyboardLights<'a> {
-    left: Color,
-    middle: Color,
-    right: Color,
-    api: OwnedOrBorrowed<'a, HidApi>,
+    areas: [Color; 3],
+    #[allow(dead_code)]
+    api: &'a HidApi,
     device: HidDevice,
 }
 
 impl <'a> KeyboardLights<'a> {
-    pub fn new() -> Result<KeyboardLights<'a>, &'static str> {
-        let api = try!(HidApi::new());
-        let device = try!(api.open(6000, 65280));
+    pub fn from_hid_api(api: &'a HidApi) -> Result<KeyboardLights<'a>, &'static str> {
+        let device = try!(api.open(VENDOR_ID, PRODUCT_ID));
         Ok(KeyboardLights {
-            left: Default::default(),
-            middle: Default::default(),
-            right: Default::default(),
-            api: Owned(api),
+            areas: [Default::default(); 3],
+            api: api,
             device: device,
         })
+    }
+
+    pub fn set_area(&mut self, area: Area, color: Color) {
+        self.areas[area.to_number()] = color;
+    }
+
+    pub fn set_all(&mut self, color: Color) {
+        for i in 0..3 {
+            self.areas[i] = color;
+        }
+    }
+
+    pub fn upload(&self) {
+        self.device.send_feature_report(&[1, 2, 65, 7, 0, 0, 0, 0]);
+        for i in 0..3 {
+            self.device.send_feature_report(&[1, 2, 64, i as u8 + 1, self.areas[i].r,
+                    self.areas[i].g, self.areas[i].b, 0]);
+        }
+        self.device.send_feature_report(&[1, 2, 65, 1, 0, 0, 0, 0]);
     }
 }
