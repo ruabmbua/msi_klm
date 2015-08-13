@@ -1,0 +1,11 @@
+[package]
+name = "msi_klm"
+version = "0.1.0"
+authors = ["Roland Ruckerbauer <roland.rucky@gmail.com>"]
+repository = "https://github.com/ruabmbua/msi_klm"
+description = "MSI keyboard light manager library and utility"
+license = "LGPL-3.0+"
+keywords = ["MSI", "KLM", "keyboard", "light", "manager"]
+
+[dependencies]
+hidapi_rust = "0.1.0"
