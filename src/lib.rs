@@ -41,11 +41,11 @@ impl Area {
     }
 }
 
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Copy, Clone, Debug)]
 pub struct Color {
-    r: u8,
-    g: u8,
-    b: u8,
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
 }
 
 impl Color {
@@ -70,14 +70,14 @@ impl <'a> KeyboardLights<'a> {
         })
     }
 
-    pub fn set_area(&mut self, area: Area, color: Color) {
+    pub fn set_area(&self, area: Area, color: Color) {
         self.device.send_feature_report(&[1, 2, 65, 7, 0, 0, 0, 0]);
         self.device.send_feature_report(&[1, 2, 64, area.to_number(), color.r, color.g, color.b,
                 0]);
         self.device.send_feature_report(&[1, 2, 65, 1, 0, 0, 0, 0]);
     }
 
-    pub fn set_all(&mut self, color: Color) {
+    pub fn set_all(&self, color: Color) {
         self.device.send_feature_report(&[1, 2, 65, 7, 0, 0, 0, 0]);
         for i in 1..4 {
             self.device.send_feature_report(&[1, 2, 64, i, color.r, color.g, color.b, 0]);
