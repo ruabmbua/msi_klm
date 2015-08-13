@@ -26,7 +26,7 @@ use getopts::{Options, Matches};
 
 fn main() {
     let api = HidApi::new();
-    let mut lights = match api {
+    let lights = match api {
         Err(e) => {
             println!("An unexpected error at api initialization occured: {}", e);
             return
