@@ -8,4 +8,5 @@ license = "LGPL-3.0+"
 keywords = ["MSI", "KLM", "keyboard", "light", "manager"]
 
 [dependencies]
-hidapi_rust = "0.1.0"
+hidapi_rust = "0.1.1"
+getopts = "0.2.12"

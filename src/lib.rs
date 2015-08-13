@@ -32,11 +32,11 @@ pub enum Area {
 }
 
 impl Area {
-    pub fn to_number(self) -> usize {
+    pub fn to_number(self) -> u8 {
         match self {
-            Area::Left => 0,
-            Area::Middle => 1,
-            Area::Right => 2,
+            Area::Left => 1,
+            Area::Middle => 2,
+            Area::Right => 3,
         }
     }
 }
@@ -59,37 +59,28 @@ impl Color {
 }
 
 pub struct KeyboardLights<'a> {
-    areas: [Color; 3],
-    #[allow(dead_code)]
-    api: &'a HidApi,
-    device: HidDevice,
+    device: HidDevice<'a>,
 }
 
 impl <'a> KeyboardLights<'a> {
     pub fn from_hid_api(api: &'a HidApi) -> Result<KeyboardLights<'a>, &'static str> {
         let device = try!(api.open(VENDOR_ID, PRODUCT_ID));
         Ok(KeyboardLights {
-            areas: [Default::default(); 3],
-            api: api,
             device: device,
         })
     }
 
     pub fn set_area(&mut self, area: Area, color: Color) {
-        self.areas[area.to_number()] = color;
+        self.device.send_feature_report(&[1, 2, 65, 7, 0, 0, 0, 0]);
+        self.device.send_feature_report(&[1, 2, 64, area.to_number(), color.r, color.g, color.b,
+                0]);
+        self.device.send_feature_report(&[1, 2, 65, 1, 0, 0, 0, 0]);
     }
 
     pub fn set_all(&mut self, color: Color) {
-        for i in 0..3 {
-            self.areas[i] = color;
-        }
-    }
-
-    pub fn upload(&self) {
         self.device.send_feature_report(&[1, 2, 65, 7, 0, 0, 0, 0]);
-        for i in 0..3 {
-            self.device.send_feature_report(&[1, 2, 64, i as u8 + 1, self.areas[i].r,
-                    self.areas[i].g, self.areas[i].b, 0]);
+        for i in 1..4 {
+            self.device.send_feature_report(&[1, 2, 64, i, color.r, color.g, color.b, 0]);
         }
         self.device.send_feature_report(&[1, 2, 65, 1, 0, 0, 0, 0]);
     }

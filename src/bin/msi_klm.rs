@@ -18,12 +18,23 @@
 ****************************************************************************/
 
 extern crate msi_klm;
+extern crate getopts;
 
-use msi_klm::{KeyboardLights, HidApi, Color};
+use msi_klm::{KeyboardLights, HidApi, Color, Area};
 
 fn main() {
-    let api = HidApi::new().unwrap();
-    let mut lights = KeyboardLights::from_hid_api(&api).unwrap();
-    lights.set_all(Color::new(0, 0, 0));
-    lights.upload();
+    let api = HidApi::new();
+    let mut lights = match api {
+        Err(e) => {
+            println!("An unexpected error at api initialization occured: {}", e);
+            return
+        },
+        Ok(ref a) => match KeyboardLights::from_hid_api(a) {
+            Err(e) => {
+                println!("An unexpected error at device opening occured: {}", e);
+                return
+            },
+            Ok(l) => l,
+        },
+    };
 }
