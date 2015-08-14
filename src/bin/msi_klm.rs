@@ -25,20 +25,7 @@ use std::env;
 use getopts::{Options, Matches};
 
 fn main() {
-    let api = HidApi::new();
-    let lights = match api {
-        Err(e) => {
-            println!("An unexpected error at api initialization occured: {}", e);
-            return
-        },
-        Ok(ref a) => match KeyboardLights::from_hid_api(a) {
-            Err(e) => {
-                println!("An unexpected error at device opening occured: {}", e);
-                return
-            },
-            Ok(l) => l,
-        },
-    };
+    println!("Copyright (c) 2015 Roland Ruckerbauer All Rights Reserved.\n");
     let mut opts = Options::new();
     let args: Vec<String> = env::args().collect();
     let program = &args[0];
@@ -58,6 +45,20 @@ fn main() {
         print_usage(program, opts);
         return;
     }
+    let api = HidApi::new();
+    let lights = match api {
+        Err(e) => {
+            println!("An unexpected error at api initialization occured: {}", e);
+            return
+        },
+        Ok(ref a) => match KeyboardLights::from_hid_api(a) {
+            Err(e) => {
+                println!("An unexpected error at device opening occured: {}", e);
+                return
+            },
+            Ok(l) => l,
+        },
+    };
     set_light(&matches, "a", &lights);
     set_light(&matches, "l", &lights);
     set_light(&matches, "m", &lights);
