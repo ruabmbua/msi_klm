@@ -25,18 +25,34 @@ use hidapi_rust::{HidDevice, c_ushort};
 const VENDOR_ID: c_ushort = 6000;
 const PRODUCT_ID: c_ushort = 65280;
 
-pub enum Area {
-    Left,
-    Middle,
-    Right,
+pub struct Lights<'a> {
+    device: HidDevice<'a>,
 }
 
-impl Area {
-    pub fn to_number(self) -> u8 {
-        match self {
-            Area::Left => 1,
-            Area::Middle => 2,
-            Area::Right => 3,
+impl <'a> Lights<'a> {
+    pub fn from_hid_api(api: &'a HidApi) -> Result<Lights<'a>, &'static str> {
+        let device = try!(api.open(VENDOR_ID, PRODUCT_ID));
+        Ok(Lights {
+            device: device,
+        })
+    }
+
+    pub fn apply_config(&self, config: &Configuration) {
+        self.set_mode(Mode::Reset);
+        match config.mode {
+            Mode::Default => self.handle_colors(config.colors),
+            _ => panic!(""),
+        }
+        self.set_mode(config.mode);
+    }
+
+    fn set_mode(&self, mode: Mode) {
+        self.device.send_feature_report(&[1, 2, 65, mode as u8, 0, 0, 0, 0]);
+    }
+
+    fn handle_colors(&self, colors: [Option<Color>; 3]) {
+        for i in 1..4 {
+
         }
     }
 }
@@ -58,30 +74,62 @@ impl Color {
     }
 }
 
-pub struct KeyboardLights<'a> {
-    device: HidDevice<'a>,
+#[derive(Copy, Clone)]
+pub enum Mode {
+    Off = 0,
+    Default = 1,
+    Game = 2,
+    Breath = 3,
+    //DontKnowWhat = 4
+    Wave = 5,
+    Fade = 6,
+    Reset = 7,
 }
 
-impl <'a> KeyboardLights<'a> {
-    pub fn from_hid_api(api: &'a HidApi) -> Result<KeyboardLights<'a>, &'static str> {
-        let device = try!(api.open(VENDOR_ID, PRODUCT_ID));
-        Ok(KeyboardLights {
-            device: device,
-        })
-    }
+pub enum Area {
+    Left = 0,
+    Middle = 1,
+    Right = 2,
+}
 
-    pub fn set_area(&self, area: Area, color: Color) {
-        self.device.send_feature_report(&[1, 2, 65, 7, 0, 0, 0, 0]);
-        self.device.send_feature_report(&[1, 2, 64, area.to_number(), color.r, color.g, color.b,
-                0]);
-        self.device.send_feature_report(&[1, 2, 65, 1, 0, 0, 0, 0]);
-    }
+pub struct Configuration {
+    mode: Mode,
+    colors: [Option<Color>; 3],
+    extra_colors: [Option<Color>; 3],
+    timer: Option<u8>,
+}
 
-    pub fn set_all(&self, color: Color) {
-        self.device.send_feature_report(&[1, 2, 65, 7, 0, 0, 0, 0]);
-        for i in 1..4 {
-            self.device.send_feature_report(&[1, 2, 64, i, color.r, color.g, color.b, 0]);
+impl Configuration {
+    pub fn new() -> Self {
+        Configuration {
+            mode: Mode::Off,
+            colors: [None; 3],
+            extra_colors: [None; 3],
+            timer: None,
         }
-        self.device.send_feature_report(&[1, 2, 65, 1, 0, 0, 0, 0]);
     }
+
+    pub fn set_mode(&mut self, mode: Mode) {self.mode = mode;}
+
+    pub fn set_color(&mut self, colors: [Option<Color>; 3]) {self.colors = colors;}
+
+    pub fn set_color_all(&mut self, color: Color) {
+        self.colors = [Some(color), Some(color), Some(color)];
+    }
+
+    pub fn set_color_area(&mut self, color: Color, area: Area) {
+        self.colors[area as usize] = Some(color);
+    }
+
+    pub fn set_extra_color(&mut self, colors: [Option<Color>; 3]) {self.extra_colors = colors;}
+
+    pub fn set_extra_color_all(&mut self, color: Color) {
+        self.extra_colors = [Some(color), Some(color), Some(color)];
+    }
+
+    pub fn set_extra_color_area(&mut self, color: Color, area: Area) {
+        self.extra_colors[area as usize] = Some(color);
+    }
+
+    pub fn set_timer(&mut self, timer: u8) {self.timer = Some(timer);}
 }
