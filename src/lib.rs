@@ -24,6 +24,9 @@ use hidapi_rust::{HidDevice, c_ushort};
 
 const VENDOR_ID: c_ushort = 6000;
 const PRODUCT_ID: c_ushort = 65280;
+const SET_TYPE_MODE: u8 = 65;
+const SET_TYPE_COLOR: u8 = 64;
+const SET_TYPE_ADVANCED: u8 = 68;
 
 pub struct Lights<'a> {
     device: HidDevice<'a>,
@@ -39,21 +42,68 @@ impl <'a> Lights<'a> {
 
     pub fn apply_config(&self, config: &Configuration) {
         self.set_mode(Mode::Reset);
-        match config.mode {
-            Mode::Default => self.handle_colors(config.colors),
-            _ => panic!(""),
+        for i in 0..3 {
+            match config.mode {
+                Mode::Default => self.handle_colors(i, config.colors, 1, 0),
+                Mode::Game => self.handle_colors(i, [config.colors[0], None, None], 1, 0),
+                Mode::Breath => {
+                    self.handle_colors(i, config.colors, 2, 0);
+                    self.handle_timer(i, config.timer, 2);
+                },
+                Mode::Wave => {
+                    self.handle_colors(i, config.colors, 3, 0);
+                    self.handle_timer(i, config.timer, 3);
+                    self.handle_colors(i, config.extra_colors, 3, 2)
+                }
+                Mode::Fade => {
+                    self.handle_colors(i, config.colors, 3, 0);
+                    self.handle_timer(i, config.timer, 3);
+                    self.handle_colors(i, config.extra_colors, 3, 2);
+                },
+                _ => (),
+            }
         }
         self.set_mode(config.mode);
+        /*self.set_mode(Mode::Reset);
+
+        self.device.send_feature_report(&[1, 2, 64, 1, 0, 255, 0, 0]);
+        //self.device.send_feature_report(&[1, 2, 68, 2, 2, 2, 2, 0]);
+
+        self.device.send_feature_report(&[1, 2, 64, 2, 0, 255, 0, 0]);
+        //self.device.send_feature_report(&[1, 2, 68, 4, 2, 2, 2, 0]);
+
+        self.device.send_feature_report(&[1, 2, 64, 3, 0, 255, 0, 0]);
+        //self.device.send_feature_report(&[1, 2, 68, 6, 2, 2, 2, 0]);
+
+        self.set_mode(Mode::Breath);*/
     }
 
     fn set_mode(&self, mode: Mode) {
-        self.device.send_feature_report(&[1, 2, 65, mode as u8, 0, 0, 0, 0]);
+        self.device.send_feature_report(&[1, 2, SET_TYPE_MODE, mode as u8, 0, 0, 0, 0]);
+        println!("{:?}", &[1, 2, SET_TYPE_MODE, mode as u8, 0, 0, 0, 0]);
     }
 
-    fn handle_colors(&self, colors: [Option<Color>; 3]) {
-        for i in 1..4 {
-
+    fn handle_colors(&self, i: usize, colors: [Option<Color>; 3], size: usize, offset: usize) {
+        let mut set_type = SET_TYPE_COLOR;
+        if size != 1 {
+            set_type = SET_TYPE_ADVANCED;
         }
+        match colors[i] {
+            Some(color) => {
+                self.device.send_feature_report(&[1, 2, set_type,
+                        (i * size + offset + 1) as u8, color.r, color.g, color.b, 0]);
+                println!("{:?}", &[1, 2, set_type,
+                        (i * size + offset + 1) as u8, color.r, color.g, color.b, 0]);
+            },
+            None => {},
+        }
+    }
+
+    fn handle_timer(&self, i: usize, timer: u8, size: usize) {
+        self.device.send_feature_report(&[1, 2, SET_TYPE_ADVANCED, (i * size + 2) as u8,
+                timer, timer, timer, 0]);
+                println!("{:?}", &[1, 2, SET_TYPE_ADVANCED, (i * size + 2) as u8,
+                        timer, timer, timer, 0]);
     }
 }
 
@@ -96,7 +146,7 @@ pub struct Configuration {
     mode: Mode,
     colors: [Option<Color>; 3],
     extra_colors: [Option<Color>; 3],
-    timer: Option<u8>,
+    timer: u8,
 }
 
 impl Configuration {
@@ -105,7 +155,7 @@ impl Configuration {
             mode: Mode::Off,
             colors: [None; 3],
             extra_colors: [None; 3],
-            timer: None,
+            timer: 2,
         }
     }
 
@@ -131,5 +181,5 @@ impl Configuration {
         self.extra_colors[area as usize] = Some(color);
     }
 
-    pub fn set_timer(&mut self, timer: u8) {self.timer = Some(timer);}
+    pub fn set_timer(&mut self, timer: u8) {self.timer = timer;}
 }
