@@ -16,6 +16,8 @@ There is an early version of the command line utility included in this project.
 To run it you have to install it first. The installation process is only
 described for linux, because windows needs some work to improve the process.
 
+**Attention: a working version of the application is located in the legacy branch.**
+
 ### Installation on Linux
 
 First install the libusb library with your system package manager:
