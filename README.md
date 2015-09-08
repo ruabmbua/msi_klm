@@ -1,4 +1,4 @@
-# msi_klm [![Crates.io](https://img.shields.io/crates/v/msi_klm.svg)](https://crates.io/crates/msi_klm) [![Build Status](https://travis-ci.org/ruabmbua/msi_klm.svg)](https://travis-ci.org/ruabmbua/msi_klm) #
+# msi_klm [![Crates.io](http://img.shields.io/crates/v/msi_klm.svg)](https://crates.io/crates/msi_klm) [![Build Status](https://travis-ci.org/ruabmbua/msi_klm.svg)](https://travis-ci.org/ruabmbua/msi_klm) #
 
 This crate provides access to the keyboard lights of MSI notebooks with Steel
 Series gaming keyboards. It is cross platform and compatible with windows and
