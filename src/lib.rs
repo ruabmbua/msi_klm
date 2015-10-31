@@ -31,6 +31,12 @@ pub enum Area {
     Right,
 }
 
+pub enum Mode {
+    Reset = 7,
+    Off = 0,
+    Default = 1,
+}
+
 impl Area {
     pub fn to_number(self) -> u8 {
         match self {
@@ -70,18 +76,18 @@ impl <'a> KeyboardLights<'a> {
         })
     }
 
+    pub fn set_mode(&self, mode: Mode) {
+        self.device.send_feature_report(&[1, 2, 65, mode as u8, 0, 0, 0, 0]);
+    }
+
     pub fn set_area(&self, area: Area, color: Color) {
-        self.device.send_feature_report(&[1, 2, 65, 7, 0, 0, 0, 0]);
         self.device.send_feature_report(&[1, 2, 64, area.to_number(), color.r, color.g, color.b,
                 0]);
-        self.device.send_feature_report(&[1, 2, 65, 1, 0, 0, 0, 0]);
     }
 
     pub fn set_all(&self, color: Color) {
-        self.device.send_feature_report(&[1, 2, 65, 7, 0, 0, 0, 0]);
         for i in 1..4 {
             self.device.send_feature_report(&[1, 2, 64, i, color.r, color.g, color.b, 0]);
         }
-        self.device.send_feature_report(&[1, 2, 65, 1, 0, 0, 0, 0]);
     }
 }

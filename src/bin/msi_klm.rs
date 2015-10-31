@@ -20,7 +20,7 @@
 extern crate msi_klm;
 extern crate getopts;
 
-use msi_klm::{KeyboardLights, HidApi, Color, Area};
+use msi_klm::{KeyboardLights, HidApi, Color, Area, Mode};
 use std::env;
 use getopts::{Options, Matches};
 
@@ -31,9 +31,10 @@ fn main() {
     let program = &args[0];
     opts.optflag("h", "help", "print this help menu");
     opts.optopt("l", "left", "set left area of keyboard", "COLOR");
-    opts.optopt("m", "middle", "set middle area of keyboard", "COLOR");
+    opts.optopt("c", "center", "set center area of keyboard", "COLOR");
     opts.optopt("r", "right", "set right area of keyboard", "COLOR");
     opts.optopt("a", "all", "set all areas of keyboard", "COLOR");
+    opts.optopt("m", "mode", "set keyboard mode (ON/OFF)", "MODE");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
         Err(e) => {
@@ -61,8 +62,25 @@ fn main() {
     };
     set_light(&matches, "a", &lights);
     set_light(&matches, "l", &lights);
-    set_light(&matches, "m", &lights);
+    set_light(&matches, "c", &lights);
     set_light(&matches, "r", &lights);
+    let mode = matches.opt_str("m");
+    match mode {
+        None => (),
+        Some(mode) => {
+            match &*mode {
+                "OFF" => {
+                    lights.set_mode(Mode::Off);
+                    println!("Successfully set light mode to OFF");
+                },
+                "ON" => {
+                    lights.set_mode(Mode::Default);
+                    println!("Successfully set light mode to ON");
+                },
+                i => println!("Invalid mode {}", i),
+            }
+        },
+    }
 }
 
 fn print_usage(program: &str, opts: Options) {
@@ -123,7 +141,7 @@ fn set_light(matches: &Matches, name: &str, lights: &KeyboardLights) {
 fn opt_to_area(opt: &str) -> Area {
     match opt {
         "l" => Area::Left,
-        "m" => Area::Middle,
+        "c" => Area::Middle,
         "r" => Area::Right,
         _ => panic!("Unexpected opt"),
     }
