@@ -18,6 +18,8 @@ described for linux, because windows needs some work to improve the process.
 
 ### Installation on Linux
 
+#### Install and configure USB assess to keyboard controller
+
 First install the libusb library with your system package manager:
 
 * Ubuntu: libusb-1.0-0-dev
@@ -30,17 +32,29 @@ the project onto your system. The path where it should go on your system is
 tell udev to reload its rules with the command *udevadm control --reload-rules*,
 or just restart your computer.
 
+#### Install required compilers and tools
+
 The next step is the installation of the rust compiler suite, and its included
 build tool. To do that head over to
 [https://www.rust-lang.org/install.html](https://www.rust-lang.org/install.html)
 and follow the instructions. I recommend the current stable version.
 
-Next clone the repository onto your local machine (you will need git), by
+Also the GNU C compiler is required on the system, to build the application.
+Install it with your systems package manager. The package is probably called
+*gcc*.
+
+Last software, which is required is git. Also install it with your systems
+package manager.
+
+#### Download and compilation
+
+Clone the repository onto your local machine, by
 typing in the command *git clone https://github.com/ruabmbua/msi_klm.git*.
 Change into the new created folder and run *cargo build --release*. This should
 build the library and command line utility with all its dependencies, and leave
 a statically linked binary at *target/release/msi_klm*. Copy that to
-*/usr/local/bin/msi_klm*, and the installation is finished.
+*/usr/local/bin/msi_klm*, and the installation is finished. For the last copy
+operation super user rights are required.
 
 ### Usage
 
@@ -48,4 +62,4 @@ After the command line utility is installed on your system, calling
 *msi_klm --help* in your command line should help you with using the program.
 
 Just an example on how to set the right part of your keyboard to fully red:
-*msi_klm --right ff0000*
+*msi_klm --right ff0000 --mode ON*
