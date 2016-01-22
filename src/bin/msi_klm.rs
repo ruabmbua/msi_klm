@@ -1,21 +1,21 @@
-/****************************************************************************
-    Copyright (c) 2015 Roland Ruckerbauer All Rights Reserved.
-
-    This file is part of msi_klm.
-
-    msi_klm is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    msi_klm is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with msi_klm.  If not, see <http://www.gnu.org/licenses/>.
-****************************************************************************/
+/// **************************************************************************
+/// Copyright (c) 2015 Roland Ruckerbauer All Rights Reserved.
+///
+/// This file is part of msi_klm.
+///
+/// msi_klm is free software: you can redistribute it and/or modify
+/// it under the terms of the GNU General Public License as published by
+/// the Free Software Foundation, either version 3 of the License, or
+/// (at your option) any later version.
+///
+/// msi_klm is distributed in the hope that it will be useful,
+/// but WITHOUT ANY WARRANTY; without even the implied warranty of
+/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+/// GNU General Public License for more details.
+///
+/// You should have received a copy of the GNU General Public License
+/// along with msi_klm.  If not, see <http://www.gnu.org/licenses/>.
+/// *************************************************************************
 
 extern crate msi_klm;
 extern crate getopts;
@@ -50,15 +50,17 @@ fn main() {
     let lights = match api {
         Err(e) => {
             println!("An unexpected error at api initialization occured: {}", e);
-            return
-        },
-        Ok(ref a) => match KeyboardLights::from_hid_api(a) {
-            Err(e) => {
-                println!("An unexpected error at device opening occured: {}", e);
-                return
-            },
-            Ok(l) => l,
-        },
+            return;
+        }
+        Ok(ref a) => {
+            match KeyboardLights::from_hid_api(a) {
+                Err(e) => {
+                    println!("An unexpected error at device opening occured: {}", e);
+                    return;
+                }
+                Ok(l) => l,
+            }
+        }
     };
     set_light(&matches, "a", &lights);
     set_light(&matches, "l", &lights);
@@ -72,14 +74,14 @@ fn main() {
                 "OFF" => {
                     lights.set_mode(Mode::Off);
                     println!("Successfully set light mode to OFF");
-                },
+                }
                 "ON" => {
                     lights.set_mode(Mode::Default);
                     println!("Successfully set light mode to ON");
-                },
+                }
                 i => println!("Invalid mode {}", i),
             }
-        },
+        }
     }
 }
 
@@ -99,7 +101,7 @@ fn hexstr_to_color(hex: &str) -> Result<Color, &'static str> {
     color.b += try!(extract_char_value(iter.next()));
     if iter.next().is_some() {
         Err("to many characters for hex color")
-    }else {
+    } else {
         Ok(color)
     }
 }
@@ -125,16 +127,16 @@ fn set_light(matches: &Matches, name: &str, lights: &KeyboardLights) {
                 Err(e) => {
                     println!("Wrong color format for option -{}: {}", name, e);
                     return;
-                },
+                }
                 Ok(c) => c,
             };
             if name == "a" {
                 lights.set_all(color);
-            }else {
+            } else {
                 lights.set_area(opt_to_area(name), color);
             }
             println!("Successfully set option -{} to {:?}", name, color);
-        },
+        }
     }
 }
 
