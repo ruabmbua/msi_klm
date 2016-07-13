@@ -17,7 +17,7 @@
 /// along with msi_klm.  If not, see <http://www.gnu.org/licenses/>.
 /// *************************************************************************
 
-extern crate hidapi_rust;
+extern crate hidapi as hidapi_rust;
 
 pub use hidapi_rust::HidApi;
 use hidapi_rust::{HidDevice, c_ushort};
