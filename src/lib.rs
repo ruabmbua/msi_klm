@@ -18,9 +18,11 @@
 /// *************************************************************************
 
 extern crate hidapi as hidapi_rust;
+extern crate libc;
 
 pub use hidapi_rust::HidApi;
-use hidapi_rust::{HidDevice, c_ushort};
+use hidapi_rust::HidDevice;
+use libc::c_ushort;
 
 const VENDOR_ID: c_ushort = 6000;
 const PRODUCT_ID: c_ushort = 65280;
@@ -71,17 +73,17 @@ impl<'a> KeyboardLights<'a> {
     }
 
     pub fn set_mode(&self, mode: Mode) {
-        self.device.send_feature_report(&[1, 2, 65, mode as u8, 0, 0, 0, 0]);
+        self.device.send_feature_report(&[1, 2, 65, mode as u8, 0, 0, 0, 0]).unwrap();
     }
 
     pub fn set_area(&self, area: Area, color: Color) {
         self.device
-            .send_feature_report(&[1, 2, 64, area.to_number(), color.r, color.g, color.b, 0]);
+            .send_feature_report(&[1, 2, 64, area.to_number(), color.r, color.g, color.b, 0]).unwrap();
     }
 
     pub fn set_all(&self, color: Color) {
         for i in 1..4 {
-            self.device.send_feature_report(&[1, 2, 64, i, color.r, color.g, color.b, 0]);
+            self.device.send_feature_report(&[1, 2, 64, i, color.r, color.g, color.b, 0]).unwrap();
         }
     }
 }
