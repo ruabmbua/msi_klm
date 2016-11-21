@@ -93,12 +93,12 @@ fn print_usage(program: &str, opts: Options) {
 fn hexstr_to_color(hex: &str) -> Result<Color, &'static str> {
     let mut color: Color = Default::default();
     let mut iter = hex.chars();
-    color.r += try!(extract_char_value(iter.next())) * 16;
-    color.r += try!(extract_char_value(iter.next()));
-    color.g += try!(extract_char_value(iter.next())) * 16;
-    color.g += try!(extract_char_value(iter.next()));
-    color.b += try!(extract_char_value(iter.next())) * 16;
-    color.b += try!(extract_char_value(iter.next()));
+    color.r += extract_char_value(iter.next())? * 16;
+    color.r += extract_char_value(iter.next())?;
+    color.g += extract_char_value(iter.next())? * 16;
+    color.g += extract_char_value(iter.next())?;
+    color.b += extract_char_value(iter.next())? * 16;
+    color.b += extract_char_value(iter.next())?;
     if iter.next().is_some() {
         Err("to many characters for hex color")
     } else {

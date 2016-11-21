@@ -66,7 +66,7 @@ pub struct KeyboardLights<'a> {
 
 impl<'a> KeyboardLights<'a> {
     pub fn from_hid_api(api: &'a HidApi) -> Result<KeyboardLights<'a>, &'static str> {
-        let device = try!(api.open(VENDOR_ID, PRODUCT_ID));
+        let device = api.open(VENDOR_ID, PRODUCT_ID)?;
         Ok(KeyboardLights { device: device })
     }
 
