@@ -5,9 +5,18 @@ authors = ["Roland Ruckerbauer <roland.rucky@gmail.com>"]
 repository = "https://github.com/ruabmbua/msi_klm"
 description = "MSI keyboard light manager library and utility"
 license = "LGPL-3.0+"
-keywords = ["MSI", "KLM", "keyboard", "light", "manager"]
+keywords = ["MSI", "KLM", "keyboard", "light", "manager", "GUI"]
+
+[features]
+default = ["gui"]
+gui = ["gtk"]
 
 [dependencies]
 hidapi = "0.4.1"
 getopts = "0.2.12"
 libc = "*"
+
+[dependencies.gtk]
+version = "0.2.0"
+features = ["v3_20"]
+optional = true
