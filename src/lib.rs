@@ -1,5 +1,5 @@
 /// **************************************************************************
-/// Copyright (c) 2016 Roland Ruckerbauer All Rights Reserved.
+/// Copyright (c) 2017 Roland Ruckerbauer All Rights Reserved.
 ///
 /// This file is part of msi_klm.
 ///

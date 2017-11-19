@@ -1,5 +1,5 @@
 /// **************************************************************************
-/// Copyright (c) 2016 Roland Ruckerbauer All Rights Reserved.
+/// Copyright (c) 2017 Roland Ruckerbauer All Rights Reserved.
 ///
 /// This file is part of msi_klm.
 ///
@@ -25,7 +25,6 @@ use std::env;
 use getopts::{Options, Matches};
 
 fn main() {
-    println!("Copyright (c) 2016 Roland Ruckerbauer All Rights Reserved.\n");
     let mut opts = Options::new();
     let args: Vec<String> = env::args().collect();
     let program = &args[0];
@@ -43,7 +42,9 @@ fn main() {
         }
     };
     if matches.opt_present("h") {
+        println!("Copyright (c) 2017 Roland Ruckerbauer All Rights Reserved.\n");
         print_usage(program, opts);
+        println!("\nHint: Colors are defined in hexadecimal, example (full red): ff0000");
         return;
     }
     let api = HidApi::new();
