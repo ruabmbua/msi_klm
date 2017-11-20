@@ -19,21 +19,86 @@
 
 extern crate hidapi as hidapi_rust;
 extern crate libc;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+extern crate app_dirs;
 
 pub use hidapi_rust::HidApi;
 use hidapi_rust::HidDevice;
 use libc::c_ushort;
+use std::collections::HashMap;
+use app_dirs::{AppDataType, AppInfo};
+use std::path::PathBuf;
+use std::fs::File;
 
 const VENDOR_ID: c_ushort = 6000;
 const PRODUCT_ID: c_ushort = 65280;
 
+#[derive(Serialize, Deserialize)]
+pub struct State {
+    pub areas: HashMap<Area, Color>,
+    pub brightness: f32,
+    pub mode: Mode,
+}
+
+impl State {
+    pub fn load_from_config() -> State {
+        if let Ok(mut p) = app_dirs::app_dir(AppDataType::UserCache, &AppInfo {
+            name: "msi_klm",
+            author: "Roland Ruckerbauer",
+        }, "/") {
+            p.push("state.json");
+            match File::open(p.as_path()) {
+                Ok(f) => {
+                    serde_json::from_reader(f)
+                        .unwrap_or(State::default())
+                }
+                Err(_) => State::default(),
+            }
+        } else {
+            State::default()
+        }
+    }
+
+    pub fn store_into_config(&self) -> Result<(), Box<std::error::Error>> {
+        let mut p = app_dirs::app_dir(AppDataType::UserCache, &AppInfo {
+            name: "msi_klm",
+            author: "Roland Ruckerbauer",
+        }, "/")?;
+        p.push("state.json");
+
+        let f = File::create(p.as_path())?;
+        serde_json::to_writer(f, self)?;
+        Ok(())
+    }
+}
+
+impl Default for State {
+    fn default() -> Self {
+        let mut hm = HashMap::new();
+        let color = Color::new(0xff, 0, 0);
+        hm.insert(Area::Left, color);
+        hm.insert(Area::Middle, color);
+        hm.insert(Area::Right, color);
+
+        State {
+            areas: hm,
+            brightness: 1.0,
+            mode: Mode::Default,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Eq, PartialEq, Hash, Copy, Clone)]
 pub enum Area {
     Left,
     Middle,
     Right,
 }
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum Mode {
     Reset = 7,
     Off = 0,
@@ -50,7 +115,7 @@ impl Area {
     }
 }
 
-#[derive(Default, Copy, Clone, Debug)]
+#[derive(Default, Copy, Clone, Debug, Serialize, Deserialize)]
 pub struct Color {
     pub r: u8,
     pub g: u8,
@@ -60,6 +125,14 @@ pub struct Color {
 impl Color {
     pub fn new(r: u8, g: u8, b: u8) -> Color {
         Color { r: r, g: g, b: b }
+    }
+
+    pub fn apply_brightness(&self, brightness: f32) -> Color {
+        Color {
+            r: (self.r as f32 * brightness) as u8,
+            g: (self.g as f32 * brightness) as u8,
+            b: (self.b as f32 * brightness) as u8,
+        }
     }
 }
 
@@ -85,6 +158,14 @@ impl KeyboardLights {
     pub fn set_all(&self, color: Color) {
         for i in 1..4 {
             self.device.send_feature_report(&[1, 2, 64, i, color.r, color.g, color.b, 0]).unwrap();
+        }
+    }
+
+    pub fn set_from_state(&self, state: &State) {
+        self.set_mode(state.mode);
+
+        for (k, v) in state.areas.iter() {
+            self.set_area(*k, v.apply_brightness(state.brightness));
         }
     }
 }

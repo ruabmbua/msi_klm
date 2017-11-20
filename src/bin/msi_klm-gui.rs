@@ -20,6 +20,8 @@
 extern crate msi_klm;
 #[cfg(feature = "gui")]
 extern crate gtk;
+#[cfg(feature = "gui")]
+extern crate gdk;
 
 #[cfg(not(feature = "gui"))]
 fn main() {
@@ -29,7 +31,11 @@ fn main() {
 
 #[cfg(feature = "gui")]
 fn main() {
-    use msi_klm::{HidApi, KeyboardLights};
+    use msi_klm::{HidApi, KeyboardLights, State};
+    use std::rc::Rc;
+    use std::cell::RefCell;
+
+    let state = Rc::new(RefCell::new(State::load_from_config()));
 
     let api = HidApi::new();
     let lights = match api {
@@ -48,14 +54,21 @@ fn main() {
         }
     };
 
-    gui::launch(lights);
+    gui::launch(lights, state.clone());
+
+
+    let state_brw = state.borrow();
+    if let Err(e) = state_brw.store_into_config() {
+        println!("An error happend, while storing state to disk: {}", e.description());
+    }
 }
 
 #[cfg(feature = "gui")]
 mod gui {
     use gtk;
+    use gdk;
     use gtk::prelude::*;
-    use msi_klm::{KeyboardLights, Area, Mode, Color, HidApi};
+    use msi_klm::{KeyboardLights, Area, Mode, Color, HidApi, State};
     use std::rc::Rc;
     use std::cell::RefCell;
 
@@ -82,7 +95,16 @@ mod gui {
         );
     }
 
-    pub fn launch(lights: KeyboardLights) {
+    fn into_gdk_color(c: &Color) -> gdk::Color {
+        gdk::Color {
+            pixel: 0,
+            red: ((c.r as u16) << 8) | c.r as u16,
+            green: ((c.g as u16) << 8) | c.g as u16,
+            blue: ((c.b as u16) << 8) | c.b as u16,
+        }
+    }
+
+    pub fn launch(lights: KeyboardLights, state: Rc<RefCell<State>>) {
         gtk::init().unwrap();
         let glade_src = include_str!("../../res/main.glade");
 
@@ -90,7 +112,19 @@ mod gui {
 
         glade_import!(main_window, gtk::ApplicationWindow, builder);
 
-        glade_import!(btn_toggle, gtk::Button, builder);
+        glade_import!(switch_power, gtk::Switch, builder);
+
+        glade_import!(color_left, gtk::ColorButton, builder);
+        glade_import!(color_center, gtk::ColorButton, builder);
+        glade_import!(color_right, gtk::ColorButton, builder);
+
+        glade_import!(scale_brightness, gtk::ScaleButton, builder);
+
+        switch_power.set_state(if state.borrow().mode == Mode::Default { true } else { false });
+        scale_brightness.set_value(state.borrow().brightness as f64 * 100.0);
+        color_left.set_color(&into_gdk_color(state.borrow().areas.get(&Area::Left).unwrap()));
+        color_center.set_color(&into_gdk_color(state.borrow().areas.get(&Area::Middle).unwrap()));
+        color_right.set_color(&into_gdk_color(state.borrow().areas.get(&Area::Right).unwrap()));
 
         main_window.connect_delete_event(|_, _| {
             gtk::main_quit();
@@ -98,18 +132,6 @@ mod gui {
         });
 
         let lights = Rc::new(lights);
-
-        let mode = Rc::new(RefCell::new(Mode::Default));
-
-        btn_toggle.connect_clicked(clone!(lights, mode => move |_| {
-            println!("Toggled");
-            *mode.borrow_mut() = if *mode.borrow() == Mode::Default {
-                Mode::Off
-            } else {
-                Mode::Default
-            };
-            lights.set_mode(*mode.borrow());
-        }));
 
         main_window.show_all();
 
