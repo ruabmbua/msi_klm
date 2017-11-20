@@ -29,22 +29,26 @@ fn main() {
 
 #[cfg(feature = "gui")]
 fn main() {
-    use std::rc::Rc;
-    use std::cell::RefCell;
     use msi_klm::{HidApi, KeyboardLights};
 
-    let api = HidApi::new().unwrap_or_else(|e| {
-        println!("An unexpected error at api initialization occured: {}", e);
-        std::process::exit(-1);
-    });
+    let api = HidApi::new();
+    let lights = match api {
+        Err(e) => {
+            println!("An unexpected error at api initialization occured: {}", e);
+            ::std::process::exit(-1);
+        }
+        Ok(ref a) => {
+            match KeyboardLights::from_hid_api(a) {
+                Err(e) => {
+                    println!("An unexpected error at device opening occured: {}", e);
+                    ::std::process::exit(-1);
+                }
+                Ok(l) => l,
+            }
+        }
+    };
 
-    let lights = KeyboardLights::from_hid_api(&api)
-        .unwrap_or_else(|e| {
-            println!("An unexpected error at device opening occured: {}", e);
-            std::process::exit(-1);
-        });
-
-    gui::launch(&lights);
+    gui::launch(lights);
 }
 
 #[cfg(feature = "gui")]
@@ -78,7 +82,7 @@ mod gui {
         );
     }
 
-    pub fn launch(device: &KeyboardLights) {
+    pub fn launch(lights: KeyboardLights) {
         gtk::init().unwrap();
         let glade_src = include_str!("../../res/main.glade");
 
@@ -93,9 +97,18 @@ mod gui {
             gtk::Inhibit(false)
         });
 
-        btn_toggle.connect_clicked(clone!(device => move |_| {
+        let lights = Rc::new(lights);
+
+        let mode = Rc::new(RefCell::new(Mode::Default));
+
+        btn_toggle.connect_clicked(clone!(lights, mode => move |_| {
             println!("Toggled");
-            device.set_mode(Mode::Off);
+            *mode.borrow_mut() = if *mode.borrow() == Mode::Default {
+                Mode::Off
+            } else {
+                Mode::Default
+            };
+            lights.set_mode(*mode.borrow());
         }));
 
         main_window.show_all();

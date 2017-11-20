@@ -20,3 +20,6 @@ libc = "*"
 version = "0.2.0"
 features = ["v3_20"]
 optional = true
+
+[patch.crates-io]
+hidapi = { git = "https://github.com/ruabmbua/hidapi-rs.git" }

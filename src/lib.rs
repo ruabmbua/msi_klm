@@ -33,6 +33,7 @@ pub enum Area {
     Right,
 }
 
+#[derive(PartialEq, Copy, Clone)]
 pub enum Mode {
     Reset = 7,
     Off = 0,
@@ -62,12 +63,12 @@ impl Color {
     }
 }
 
-pub struct KeyboardLights<'a> {
-    device: HidDevice<'a>,
+pub struct KeyboardLights {
+    device: HidDevice,
 }
 
-impl<'a> KeyboardLights<'a> {
-    pub fn from_hid_api(api: &'a HidApi) -> Result<KeyboardLights<'a>, &'static str> {
+impl KeyboardLights {
+    pub fn from_hid_api(api: &HidApi) -> Result<KeyboardLights, &'static str> {
         let device = api.open(VENDOR_ID, PRODUCT_ID)?;
         Ok(KeyboardLights { device: device })
     }
