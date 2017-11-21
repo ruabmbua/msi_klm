@@ -22,7 +22,9 @@ described for linux, because windows needs some work to improve the process.
 
 ### Installation on Arch linux
 
-Coming soon!
+Go to the [AUR package](https://aur.archlinux.org/packages/msi-keyboard-light-manager/), and install it.
+
+Note: You have to install the [rust toolchain](https://www.rust-lang.org/en-US/install.html) before you try to build the AUR package.
 
 ### Installation on Linux
 
