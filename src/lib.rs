@@ -28,15 +28,15 @@ extern crate app_dirs;
 pub use hidapi_rust::HidApi;
 use hidapi_rust::HidDevice;
 use libc::c_ushort;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use app_dirs::{AppDataType, AppInfo};
-use std::path::PathBuf;
 use std::fs::File;
 
 const VENDOR_ID: c_ushort = 6000;
 const PRODUCT_ID: c_ushort = 65280;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct State {
     pub areas: HashMap<Area, Color>,
     pub brightness: f32,
@@ -44,7 +44,7 @@ pub struct State {
 }
 
 impl State {
-    pub fn load_from_config() -> State {
+    fn load_from_config() -> State {
         if let Ok(mut p) = app_dirs::app_dir(AppDataType::UserCache, &AppInfo {
             name: "msi_klm",
             author: "Roland Ruckerbauer",
@@ -62,7 +62,7 @@ impl State {
         }
     }
 
-    pub fn store_into_config(&self) -> Result<(), Box<std::error::Error>> {
+    fn store_into_config(&self) -> Result<(), Box<std::error::Error>> {
         let mut p = app_dirs::app_dir(AppDataType::UserCache, &AppInfo {
             name: "msi_klm",
             author: "Roland Ruckerbauer",
@@ -138,34 +138,65 @@ impl Color {
 
 pub struct KeyboardLights {
     device: HidDevice,
+    pub state: RefCell<State>,
 }
 
 impl KeyboardLights {
     pub fn from_hid_api(api: &HidApi) -> Result<KeyboardLights, &'static str> {
         let device = api.open(VENDOR_ID, PRODUCT_ID)?;
-        Ok(KeyboardLights { device: device })
+        Ok(KeyboardLights { device: device, state: RefCell::new(State::load_from_config()) })
     }
 
     pub fn set_mode(&self, mode: Mode) {
         self.device.send_feature_report(&[1, 2, 65, mode as u8, 0, 0, 0, 0]).unwrap();
+        self.state.borrow_mut().mode = mode;
     }
 
     pub fn set_area(&self, area: Area, color: Color) {
+        let real = color.apply_brightness(self.state.borrow().brightness);
         self.device
-            .send_feature_report(&[1, 2, 64, area.to_number(), color.r, color.g, color.b, 0]).unwrap();
+            .send_feature_report(&[1, 2, 64, area.to_number(), real.r, real.g, real.b, 0]).unwrap();
+        *self.state.borrow_mut().areas.get_mut(&area).unwrap() = color;
     }
 
     pub fn set_all(&self, color: Color) {
-        for i in 1..4 {
-            self.device.send_feature_report(&[1, 2, 64, i, color.r, color.g, color.b, 0]).unwrap();
+        let real = color.apply_brightness(self.state.borrow().brightness);
+
+        let mut brw = self.state.borrow_mut();
+
+        for area in [Area::Left, Area::Middle, Area::Right].iter() {
+            self.device.send_feature_report(&[1, 2, 64, area.to_number(),
+                real.r, real.g, real.b, 0]).unwrap();
+
+            *brw.areas.get_mut(area).unwrap() = color;
         }
     }
 
-    pub fn set_from_state(&self, state: &State) {
-        self.set_mode(state.mode);
+    pub fn set_brightness(&self, brightness: f32) {
+        self.state.borrow_mut().brightness = brightness;
 
-        for (k, v) in state.areas.iter() {
-            self.set_area(*k, v.apply_brightness(state.brightness));
+        for area in [Area::Left, Area::Middle, Area::Right].iter() {
+            let real = self.state.borrow().areas.get(area)
+                .unwrap().apply_brightness(brightness);
+
+            self.device.send_feature_report(&[1, 2, 64, area.to_number(),
+                real.r, real.g, real.b, 0]).unwrap();
         }
+    }
+
+    pub fn restore_state(&self) {
+        let state2;
+        {
+            state2 = self.state.borrow().clone();
+        }
+        self.set_mode(state2.mode);
+
+        for (k, v) in state2.areas.iter() {
+            self.set_area(*k, v.apply_brightness(state2.brightness));
+        }
+    }
+
+    pub fn disk_commit_state(&self) {
+        self.state.borrow().store_into_config().unwrap();
     }
 }

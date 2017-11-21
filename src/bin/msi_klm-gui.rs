@@ -31,14 +31,11 @@ fn main() {
 
 #[cfg(feature = "gui")]
 fn main() {
-    use msi_klm::{HidApi, KeyboardLights, State};
+    use msi_klm::{HidApi, KeyboardLights};
     use std::rc::Rc;
-    use std::cell::RefCell;
-
-    let state = Rc::new(RefCell::new(State::load_from_config()));
 
     let api = HidApi::new();
-    let lights = match api {
+    let lights = Rc::new(match api {
         Err(e) => {
             println!("An unexpected error at api initialization occured: {}", e);
             ::std::process::exit(-1);
@@ -52,15 +49,11 @@ fn main() {
                 Ok(l) => l,
             }
         }
-    };
+    });
 
-    gui::launch(lights, state.clone());
+    gui::launch(lights.clone());
 
-
-    let state_brw = state.borrow();
-    if let Err(e) = state_brw.store_into_config() {
-        println!("An error happend, while storing state to disk: {}", e.description());
-    }
+    lights.disk_commit_state();
 }
 
 #[cfg(feature = "gui")]
@@ -68,9 +61,8 @@ mod gui {
     use gtk;
     use gdk;
     use gtk::prelude::*;
-    use msi_klm::{KeyboardLights, Area, Mode, Color, HidApi, State};
+    use msi_klm::{KeyboardLights, Area, Mode, Color};
     use std::rc::Rc;
-    use std::cell::RefCell;
 
     macro_rules! glade_import {
         ($name:ident, $gtype:path, $builder:ident) => {
@@ -104,7 +96,7 @@ mod gui {
         }
     }
 
-    pub fn launch(lights: KeyboardLights, state: Rc<RefCell<State>>) {
+    pub fn launch(lights: Rc<KeyboardLights>) {
         gtk::init().unwrap();
         let glade_src = include_str!("../../res/main.glade");
 
@@ -120,18 +112,16 @@ mod gui {
 
         glade_import!(scale_brightness, gtk::ScaleButton, builder);
 
-        switch_power.set_state(if state.borrow().mode == Mode::Default { true } else { false });
-        scale_brightness.set_value(state.borrow().brightness as f64 * 100.0);
-        color_left.set_color(&into_gdk_color(state.borrow().areas.get(&Area::Left).unwrap()));
-        color_center.set_color(&into_gdk_color(state.borrow().areas.get(&Area::Middle).unwrap()));
-        color_right.set_color(&into_gdk_color(state.borrow().areas.get(&Area::Right).unwrap()));
+        switch_power.set_state(if lights.state.borrow().mode == Mode::Default { true } else { false });
+        scale_brightness.set_value(lights.state.borrow().brightness as f64 * 100.0);
+        color_left.set_color(&into_gdk_color(lights.state.borrow().areas.get(&Area::Left).unwrap()));
+        color_center.set_color(&into_gdk_color(lights.state.borrow().areas.get(&Area::Middle).unwrap()));
+        color_right.set_color(&into_gdk_color(lights.state.borrow().areas.get(&Area::Right).unwrap()));
 
         main_window.connect_delete_event(|_, _| {
             gtk::main_quit();
             gtk::Inhibit(false)
         });
-
-        let lights = Rc::new(lights);
 
         main_window.show_all();
 

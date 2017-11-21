@@ -84,6 +84,8 @@ fn main() {
             }
         }
     }
+
+    lights.disk_commit_state();
 }
 
 fn print_usage(program: &str, opts: Options) {
