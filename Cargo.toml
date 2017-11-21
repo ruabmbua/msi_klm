@@ -12,7 +12,7 @@ keywords = [
 license = "LGPL-3.0+"
 name = "msi_klm"
 repository = "https://github.com/ruabmbua/msi_klm"
-version = "0.3.0"
+version = "1.0.0"
 
 [dependencies]
 app_dirs = "1.1.1"
@@ -22,15 +22,19 @@ libc = "*"
 serde = "1.0.21"
 serde_derive = "1.0.21"
 serde_json = "1.0.6"
-gdk = "*"
 
 [dependencies.gtk]
 features = ["v3_20"]
 optional = true
 version = "0.2.0"
 
+[dependencies.gdk]
+version = "*"
+optional = true
+
 [features]
 default = ["gui"]
-gui = ["gtk"]
+gui = ["gtk", "gdk"]
+
 [patch.crates-io.hidapi]
 git = "https://github.com/ruabmbua/hidapi-rs.git"
