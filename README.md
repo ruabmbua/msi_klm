@@ -10,15 +10,23 @@ This crate is a work in progress, because there are missing features in the API.
 The API is feature complete, when the functionality is comparable to the Steel
 Series Engine 3.
 
-## Command line utility installation and usage
+## Screenshot
+
+![GUI screenshot](https://raw.githubusercontent.com/ruabmbua/msi_klm/stable/screenshot.png)
+
+## Installation and usage
 
 There is an early version of the command line utility included in this project.
 To run it you have to install it first. The installation process is only
 described for linux, because windows needs some work to improve the process.
 
+### Installation on Arch linux
+
+Coming soon!
+
 ### Installation on Linux
 
-#### Install and configure USB assess to keyboard controller
+#### Install and configure USB access to keyboard controller
 
 First install the libusb library with your system package manager:
 
@@ -31,6 +39,11 @@ the project onto your system. The path where it should go on your system is
 */etc/udev/rules.d/90-msi-epf.rules*. After copying is finished, you have to
 tell udev to reload its rules with the command *udevadm control --reload-rules*,
 or just restart your computer.
+
+#### Install GTK3 development libraries (optional)
+
+This is only required, when the GUI of the tool is wanted too.
+Please look at your distro documentation, for how to install GTK3 development libraries.
 
 #### Install required compilers and tools
 
@@ -50,9 +63,13 @@ package manager.
 
 Clone the repository onto your local machine, by
 typing in the command *git clone https://github.com/ruabmbua/msi_klm.git*.
-Change into the new created folder and run *cargo build --release*. This should
-build the library and command line utility with all its dependencies, and leave
-a statically linked binary at *target/release/msi_klm*. Copy that to
+Change into the new created folder and run *cargo build --no-default-features --release*.
+
+When you want the GUI of the tool, then do not pass the *--no-default-features* flag.
+
+This should build the library and command line utility with all its dependencies, and leave
+a statically linked binary at *target/release/msi_klm*, and when built with UI support,
+then also *target/release/msi_klm-gui*. Copy these to
 */usr/local/bin/msi_klm*, and the installation is finished. For the last copy
 operation super user rights are required.
 
@@ -63,3 +80,5 @@ After the command line utility is installed on your system, calling
 
 Just an example on how to set the right part of your keyboard to fully red:
 *msi_klm --right ff0000 --mode ON*
+
+When compiled with GUI support, then launch *msi_klm-gui*, which should show you the user interface.
