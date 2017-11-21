@@ -189,10 +189,12 @@ impl KeyboardLights {
         {
             state2 = self.state.borrow().clone();
         }
+
         self.set_mode(state2.mode);
+        self.set_brightness(state2.brightness);
 
         for (k, v) in state2.areas.iter() {
-            self.set_area(*k, v.apply_brightness(state2.brightness));
+            self.set_area(*k, *v);
         }
     }
 

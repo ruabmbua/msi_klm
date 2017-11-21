@@ -51,6 +51,8 @@ fn main() {
         }
     });
 
+    lights.restore_state();
+
     gui::launch(lights.clone());
 
     lights.disk_commit_state();

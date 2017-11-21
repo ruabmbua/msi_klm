@@ -34,6 +34,8 @@ fn main() {
     opts.optopt("r", "right", "set right area of keyboard", "COLOR");
     opts.optopt("a", "all", "set all areas of keyboard", "COLOR");
     opts.optopt("m", "mode", "set keyboard mode (ON/OFF)", "MODE");
+    opts.optopt("b", "brightness", "Set keyboard brightness (0-100)",
+                "BRIGHTNESS");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
         Err(e) => {
@@ -63,6 +65,23 @@ fn main() {
             }
         }
     };
+
+    lights.restore_state();
+
+    if let Some(b_str) = matches.opt_str("b") {
+        if let Ok(b) = b_str.parse::<f32>() {
+            if b < 0.0 || b > 100.0 {
+                println!("Error: to small or large brightness value {}", b);
+                return;
+            }
+
+            lights.set_brightness(b / 100.0);
+        } else {
+            println!("Error: unknown brightness format '{}'", b_str);
+            return;
+        }
+    }
+
     set_light(&matches, "a", &lights);
     set_light(&matches, "l", &lights);
     set_light(&matches, "c", &lights);
