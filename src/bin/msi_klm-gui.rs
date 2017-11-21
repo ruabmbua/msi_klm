@@ -96,6 +96,14 @@ mod gui {
         }
     }
 
+    fn from_gdk_color(c: &gdk::Color) -> Color {
+        Color::new(
+            (c.red >> 8) as u8,
+            (c.green >> 8) as u8,
+            (c.blue >> 8) as u8,
+        )
+    }
+
     pub fn launch(lights: Rc<KeyboardLights>) {
         gtk::init().unwrap();
         let glade_src = include_str!("../../res/main.glade");
@@ -123,8 +131,27 @@ mod gui {
             gtk::Inhibit(false)
         });
 
+        switch_power.connect_state_set(clone!(lights => move |_, state| {
+            lights.set_mode(if state { Mode::Default } else { Mode::Off });
+            gtk::Inhibit(false)
+        }));
+
+        setup_color_connect(&color_left, &lights, Area::Left);
+        setup_color_connect(&color_center, &lights, Area::Middle);
+        setup_color_connect(&color_right, &lights, Area::Right);
+
+        scale_brightness.connect_value_changed(clone!(lights => move |_, v| {
+            lights.set_brightness((v / 100.0) as f32);
+        }));
+
         main_window.show_all();
 
         gtk::main();
+    }
+
+    fn setup_color_connect(ui: &gtk::ColorButton, lights: &Rc<KeyboardLights>, area: Area) {
+        ui.connect_color_set(clone!(lights => move |ui| {
+            lights.set_area(area, from_gdk_color(&ui.get_color()));
+        }));
     }
 }
