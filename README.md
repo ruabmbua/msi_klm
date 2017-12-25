@@ -20,6 +20,11 @@ There is an early version of the command line utility included in this project.
 To run it you have to install it first. The installation process is only
 described for linux, because windows needs some work to improve the process.
 
+### Installation on Windows
+
+Download the most recent version from the [releases page](https://github.com/ruabmbua/msi_klm/releases).
+Then download setup.exe, double click the downladed file to install the program.
+
 ### Installation on Arch linux
 
 Go to the [AUR package](https://aur.archlinux.org/packages/msi-keyboard-light-manager/), and install it.
