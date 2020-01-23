@@ -1,5 +1,7 @@
 # msi_klm [![Crates.io](https://img.shields.io/crates/v/msi_klm.svg)](https://crates.io/crates/msi_klm) [![Build Status](https://travis-ci.org/ruabmbua/msi_klm.svg)](https://travis-ci.org/ruabmbua/msi_klm) #
 
+## I LOST THIS LAPTOP ON A TRAIN TO HUNGARY. PLEASE CONTACT ME IN GITHUB ISSUES IF YOU WANT TO TAKE OVER.
+
 This crate provides access to the keyboard lights of MSI notebooks with Steel
 Series gaming keyboards. It is cross platform and compatible with windows and
 linux. The goal of this project is the creation of a GUI and a command line
